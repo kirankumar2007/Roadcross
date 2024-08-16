@@ -1,138 +1,156 @@
-const gameContainer = document.getElementById('game-container');
+const gameArea = document.getElementById('game-area');
 const player = document.getElementById('player');
 const scoreElement = document.getElementById('score-value');
 const highScoreElement = document.getElementById('high-score-value');
 const levelElement = document.getElementById('level-value');
 const startButton = document.getElementById('start-button');
 const pauseButton = document.getElementById('pause-button');
+const roadsContainer = document.getElementById('roads');
 
-let playerPosition = { x: 180, y: 10 };
-let score = 0;
-let highScore = 0;
-let level = 1;
-let cars = [];
-let isGameRunning = false;
-let gameLoopId;
+let gameState = {
+    player: { x: 0, y: 0 },
+    score: 0,
+    highScore: 0,
+    level: 1,
+    isRunning: false,
+    roads: [],
+    cars: []
+};
 
-function movePlayer(e) {
-    if (!isGameRunning) return;
+const ROAD_HEIGHT = 60;
+const ROAD_GAP = 40;
+const PLAYER_SPEED = 5;
+const CAR_SPEED = 2;
 
-    const step = 10;
-    switch (e.key) {
-        case 'ArrowLeft':
-            if (playerPosition.x > 0) playerPosition.x -= step;
-            break;
-        case 'ArrowRight':
-            if (playerPosition.x < 360) playerPosition.x += step;
-            break;
-        case 'ArrowUp':
-            if (playerPosition.y < 560) playerPosition.y += step;
-            break;
-        case 'ArrowDown':
-            if (playerPosition.y > 10) playerPosition.y -= step;
-            break;
-    }
+function initGame() {
+    gameState.player = { x: gameArea.clientWidth / 2 - 15, y: gameArea.clientHeight - 40 };
     updatePlayerPosition();
-    checkCollision();
-    checkCrossing();
+    createRoads();
+}
+
+function createRoads() {
+    const roadCount = Math.floor(gameArea.clientHeight / (ROAD_HEIGHT + ROAD_GAP));
+    for (let i = 0; i < roadCount; i++) {
+        const road = document.createElement('div');
+        road.classList.add('road');
+        road.style.bottom = `${i * (ROAD_HEIGHT + ROAD_GAP)}px`;
+        roadsContainer.appendChild(road);
+        gameState.roads.push({ element: road, y: i * (ROAD_HEIGHT + ROAD_GAP) });
+    }
 }
 
 function updatePlayerPosition() {
-    player.style.left = `${playerPosition.x}px`;
-    player.style.bottom = `${playerPosition.y}px`;
+    player.style.left = `${gameState.player.x}px`;
+    player.style.bottom = `${gameState.player.y}px`;
 }
 
-function createCar() {
+function movePlayer(direction) {
+    switch(direction) {
+        case 'left':
+            if (gameState.player.x > 0) gameState.player.x -= PLAYER_SPEED;
+            break;
+        case 'right':
+            if (gameState.player.x < gameArea.clientWidth - 30) gameState.player.x += PLAYER_SPEED;
+            break;
+        case 'up':
+            if (gameState.player.y < gameArea.clientHeight - 30) gameState.player.y += PLAYER_SPEED;
+            break;
+        case 'down':
+            if (gameState.player.y > 0) gameState.player.y -= PLAYER_SPEED;
+            break;
+    }
+    updatePlayerPosition();
+    checkCrossing();
+}
+
+function createCar(road) {
     const car = document.createElement('div');
     car.classList.add('car');
-    car.style.top = `${Math.random() * 500}px`;
-    car.style.right = '-60px';
-    gameContainer.appendChild(car);
-    cars.push(car);
+    car.style.bottom = `${road.y + ROAD_HEIGHT / 2 - 12.5}px`;
+    car.style.left = `${Math.random() > 0.5 ? '-50px' : gameArea.clientWidth + 'px'}`;
+    gameArea.appendChild(car);
+    return { element: car, x: parseInt(car.style.left), y: parseInt(car.style.bottom), direction: car.style.left === '-50px' ? 1 : -1 };
 }
 
 function moveCars() {
-    cars.forEach((car, index) => {
-        const currentPosition = parseInt(car.style.right);
-        if (currentPosition > 400) {
-            gameContainer.removeChild(car);
-            cars.splice(index, 1);
-        } else {
-            car.style.right = `${currentPosition + 5}px`;
+    gameState.cars.forEach((car, index) => {
+        car.x += car.direction * CAR_SPEED;
+        car.element.style.left = `${car.x}px`;
+        
+        if (car.x > gameArea.clientWidth + 50 || car.x < -50) {
+            gameArea.removeChild(car.element);
+            gameState.cars.splice(index, 1);
         }
+        
+        checkCollision(car);
     });
 }
 
-function checkCollision() {
+function checkCollision(car) {
     const playerRect = player.getBoundingClientRect();
-    for (let car of cars) {
-        const carRect = car.getBoundingClientRect();
-        if (
-            playerRect.left < carRect.right &&
-            playerRect.right > carRect.left &&
-            playerRect.top < carRect.bottom &&
-            playerRect.bottom > carRect.top
-        ) {
-            gameOver();
-            return;
-        }
+    const carRect = car.element.getBoundingClientRect();
+    
+    if (playerRect.left < carRect.right &&
+        playerRect.right > carRect.left &&
+        playerRect.top < carRect.bottom &&
+        playerRect.bottom > carRect.top) {
+        gameOver();
     }
 }
 
 function checkCrossing() {
-    if (playerPosition.y >= 560) {
-        score++;
-        scoreElement.textContent = score;
-        playerPosition.y = 10;
+    if (gameState.player.y >= gameArea.clientHeight - 30) {
+        gameState.score++;
+        scoreElement.textContent = gameState.score;
+        gameState.player.y = 0;
         updatePlayerPosition();
         updateLevel();
     }
 }
 
 function updateLevel() {
-    level = Math.floor(score / 5) + 1;
-    levelElement.textContent = level;
+    gameState.level = Math.floor(gameState.score / 5) + 1;
+    levelElement.textContent = gameState.level;
 }
 
 function gameOver() {
-    alert('Game Over! Your score: ' + score);
+    gameState.isRunning = false;
+    alert(`Game Over! Your score: ${gameState.score}`);
     updateHighScore();
     resetGame();
 }
 
 function updateHighScore() {
-    if (score > highScore) {
-        highScore = score;
-        highScoreElement.textContent = highScore;
+    if (gameState.score > gameState.highScore) {
+        gameState.highScore = gameState.score;
+        highScoreElement.textContent = gameState.highScore;
     }
 }
 
 function resetGame() {
-    playerPosition = { x: 180, y: 10 };
-    updatePlayerPosition();
-    score = 0;
-    scoreElement.textContent = score;
-    level = 1;
-    levelElement.textContent = level;
-    cars.forEach(car => gameContainer.removeChild(car));
-    cars = [];
-    startButton.textContent = 'Start Game';
-    isGameRunning = false;
-    cancelAnimationFrame(gameLoopId);
+    gameState.score = 0;
+    gameState.level = 1;
+    scoreElement.textContent = gameState.score;
+    levelElement.textContent = gameState.level;
+    gameState.cars.forEach(car => gameArea.removeChild(car.element));
+    gameState.cars = [];
+    initGame();
 }
 
 function gameLoop() {
-    if (isGameRunning) {
+    if (gameState.isRunning) {
         moveCars();
-        if (Math.random() < 0.02 * level) createCar();
-        checkCollision();
-        gameLoopId = requestAnimationFrame(gameLoop);
+        if (Math.random() < 0.02 * gameState.level) {
+            const randomRoad = gameState.roads[Math.floor(Math.random() * gameState.roads.length)];
+            gameState.cars.push(createCar(randomRoad));
+        }
+        requestAnimationFrame(gameLoop);
     }
 }
 
 function startGame() {
-    if (!isGameRunning) {
-        isGameRunning = true;
+    if (!gameState.isRunning) {
+        gameState.isRunning = true;
         gameLoop();
         startButton.textContent = 'Restart';
     } else {
@@ -141,17 +159,39 @@ function startGame() {
 }
 
 function togglePause() {
-    if (isGameRunning) {
-        isGameRunning = false;
-        cancelAnimationFrame(gameLoopId);
-        pauseButton.textContent = 'Resume';
-    } else {
-        isGameRunning = true;
+    gameState.isRunning = !gameState.isRunning;
+    if (gameState.isRunning) {
         gameLoop();
         pauseButton.textContent = 'Pause';
+    } else {
+        pauseButton.textContent = 'Resume';
     }
 }
 
-document.addEventListener('keydown', movePlayer);
+document.addEventListener('keydown', (e) => {
+    if (gameState.isRunning) {
+        switch(e.key) {
+            case 'ArrowLeft':
+            case 'a':
+                movePlayer('left');
+                break;
+            case 'ArrowRight':
+            case 'd':
+                movePlayer('right');
+                break;
+            case 'ArrowUp':
+            case 'w':
+                movePlayer('up');
+                break;
+            case 'ArrowDown':
+            case 's':
+                movePlayer('down');
+                break;
+        }
+    }
+});
+
 startButton.addEventListener('click', startGame);
 pauseButton.addEventListener('click', togglePause);
+
+initGame();
