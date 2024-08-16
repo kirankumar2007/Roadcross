@@ -31,13 +31,16 @@ const POWER_UP_TYPES = ['shield', 'slowTime', 'speedBoost'];
 const POWER_UP_DURATION = 5000;
 
 function initGame() {
-    gameState.player = { x: gameArea.clientWidth / 2 - 15, y: gameArea.clientHeight - 40, speed: 5, isInvincible: false };
+    console.log("Initializing game...");
+    gameState.player = { x: gameArea.clientWidth / 2 - 35, y: gameArea.clientHeight - 80, speed: 5, isInvincible: false };
     updatePlayerPosition();
     createRoads();
+    gameState.isRunning = true;
+    gameLoop();
 }
 
 function createRoads() {
-    const roadCount = Math.floor(gameArea.clientHeight / (ROAD_HEIGHT + ROAD_GAP));
+    const roadCount = Math.ceil(gameArea.clientHeight / (ROAD_HEIGHT + ROAD_GAP)) + 1;
     for (let i = 0; i < roadCount; i++) {
         const road = document.createElement('div');
         road.classList.add('road');
@@ -45,6 +48,7 @@ function createRoads() {
         roadsContainer.appendChild(road);
         gameState.roads.push({ element: road, y: i * (ROAD_HEIGHT + ROAD_GAP) });
     }
+    console.log("Roads created.");
 }
 
 function updatePlayerPosition() {
@@ -92,28 +96,23 @@ function moveVehicles() {
         vehicle.x += vehicle.direction * vehicle.speed;
         vehicle.element.style.left = `${vehicle.x}px`;
         
-        if (vehicle.x > gameArea.clientWidth + 50 || vehicle.x < -50) {
+        if (vehicle.x > gameArea.clientWidth || vehicle.x < -50) {
             vehicle.element.remove();
             gameState.vehicles.splice(index, 1);
         }
     });
 }
 
-function generatePowerUp() {
+function createPowerUp() {
     const type = POWER_UP_TYPES[Math.floor(Math.random() * POWER_UP_TYPES.length)];
     const powerUp = document.createElement('div');
     powerUp.classList.add('power-up');
-    powerUp.setAttribute('data-type', type);
+    powerUp.dataset.type = type;
+    powerUp.textContent = type.charAt(0).toUpperCase();
+    powerUp.style.bottom = `${Math.random() * (gameArea.clientHeight - 30)}px`;
     powerUp.style.left = `${Math.random() * (gameArea.clientWidth - 30)}px`;
-    powerUp.style.bottom = `${gameArea.clientHeight}px`;
     powerUpsContainer.appendChild(powerUp);
-    
-    return { 
-        element: powerUp, 
-        x: parseInt(powerUp.style.left), 
-        y: parseInt(powerUp.style.bottom), 
-        type 
-    };
+    gameState.powerUps.push({ element: powerUp, type });
 }
 
 function movePowerUps() {
@@ -130,15 +129,25 @@ function movePowerUps() {
 
 function checkCollisions() {
     gameState.vehicles.forEach(vehicle => {
-        if (isColliding(player, vehicle.element)) {
-            if (!gameState.player.isInvincible) {
-                endGame();
-            }
+        const vehicleRect = vehicle.element.getBoundingClientRect();
+        const playerRect = player.getBoundingClientRect();
+        if (!(vehicleRect.right < playerRect.left || 
+              vehicleRect.left > playerRect.right || 
+              vehicleRect.bottom < playerRect.top || 
+              vehicleRect.top > playerRect.bottom)) {
+            if (!gameState.player.isInvincible) gameOver();
         }
     });
+}
 
+function checkPowerUps() {
     gameState.powerUps.forEach((powerUp, index) => {
-        if (isColliding(player, powerUp.element)) {
+        const powerUpRect = powerUp.element.getBoundingClientRect();
+        const playerRect = player.getBoundingClientRect();
+        if (!(powerUpRect.right < playerRect.left || 
+              powerUpRect.left > playerRect.right || 
+              powerUpRect.bottom < playerRect.top || 
+              powerUpRect.top > playerRect.bottom)) {
             activatePowerUp(powerUp.type);
             powerUp.element.remove();
             gameState.powerUps.splice(index, 1);
@@ -146,25 +155,21 @@ function checkCollisions() {
     });
 }
 
-function isColliding(player, element) {
-    const rect1 = player.getBoundingClientRect();
-    const rect2 = element.getBoundingClientRect();
-    
-    return !(rect1.right < rect2.left || 
-             rect1.left > rect2.right || 
-             rect1.bottom < rect2.top || 
-             rect1.top > rect2.bottom);
-}
-
 function activatePowerUp(type) {
-    if (type === 'shield') {
-        gameState.player.isInvincible = true;
-        setTimeout(() => gameState.player.isInvincible = false, POWER_UP_DURATION);
-    } else if (type === 'slowTime') {
-        // Implement slow time functionality
-    } else if (type === 'speedBoost') {
-        gameState.player.speed += 2;
-        setTimeout(() => gameState.player.speed -= 2, POWER_UP_DURATION);
+    console.log(`Activating power-up: ${type}`);
+    switch (type) {
+        case 'shield':
+            gameState.player.isInvincible = true;
+            setTimeout(() => gameState.player.isInvincible = false, POWER_UP_DURATION);
+            break;
+        case 'slowTime':
+            gameState.level++;
+            levelElement.textContent = gameState.level;
+            break;
+        case 'speedBoost':
+            gameState.player.speed += 2;
+            setTimeout(() => gameState.player.speed -= 2, POWER_UP_DURATION);
+            break;
     }
 }
 
@@ -181,28 +186,18 @@ function checkCrossing() {
     }
 }
 
-function endGame() {
+function gameOver() {
+    console.log("Game over!");
     gameState.isRunning = false;
     gameOverScreen.style.display = 'block';
 }
 
 function restartGame() {
-    gameState.score = 0;
-    scoreElement.textContent = gameState.score;
-    gameState.highScore = Math.max(gameState.highScore, gameState.score);
-    highScoreElement.textContent = gameState.highScore;
-    levelElement.textContent = 1;
-    gameState.timeOfDay = 'day';
-    timeOfDayElement.textContent = gameState.timeOfDay;
+    console.log("Restarting game...");
     gameOverScreen.style.display = 'none';
-    gameState.vehicles.forEach(vehicle => vehicle.element.remove());
-    gameState.powerUps.forEach(powerUp => powerUp.element.remove());
-    gameState.roads.forEach(road => road.element.remove());
-    gameState.roads = [];
-    gameState.vehicles = [];
-    gameState.powerUps = [];
     initGame();
     gameState.isRunning = true;
+    gameLoop();
 }
 
 function gameLoop() {
@@ -210,20 +205,27 @@ function gameLoop() {
         moveVehicles();
         movePowerUps();
         checkCollisions();
+        checkPowerUps();
+        gameState.timeCycle++;
         if (gameState.timeCycle % 1000 === 0) {
             gameState.timeOfDay = gameState.timeOfDay === 'day' ? 'night' : 'day';
             gameArea.classList.toggle('night', gameState.timeOfDay === 'night');
             timeOfDayElement.textContent = gameState.timeOfDay;
         }
-        gameState.timeCycle++;
         requestAnimationFrame(gameLoop);
     }
 }
 
+// Placeholder functions
+function placeholderFunction1() { console.log("Placeholder function 1"); }
+function placeholderFunction2() { console.log("Placeholder function 2"); }
+function placeholderFunction3() { console.log("Placeholder function 3"); }
+function placeholderFunction4() { console.log("Placeholder function 4"); }
+function placeholderFunction5() { console.log("Placeholder function 5"); }
+
 startButton.addEventListener('click', () => {
     if (!gameState.isRunning) {
-        restartGame();
-        gameLoop();
+        initGame();
     }
 });
 
@@ -234,13 +236,12 @@ pauseButton.addEventListener('click', () => {
     }
 });
 
-restartButton.addEventListener('click', () => {
-    restartGame();
-});
+restartButton.addEventListener('click', restartGame);
 
-document.addEventListener('keydown', (event) => {
+// Event listeners for player controls
+document.addEventListener('keydown', (e) => {
     if (gameState.isRunning) {
-        switch (event.key) {
+        switch (e.code) {
             case 'ArrowLeft':
                 movePlayer('left');
                 break;
@@ -257,4 +258,4 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
-initGame();
+console.log("JavaScript loaded.");
