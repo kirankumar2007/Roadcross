@@ -8,8 +8,10 @@ const startButton = document.getElementById('start-button');
 const pauseButton = document.getElementById('pause-button');
 const restartButton = document.getElementById('restart-button');
 const roadsContainer = document.getElementById('roads');
+const vehiclesContainer = document.getElementById('vehicles');
 const powerUpsContainer = document.getElementById('power-ups');
 const gameOverScreen = document.getElementById('game-over');
+const finalScoreElement = document.getElementById('final-score');
 
 let gameState = {
     player: { x: 0, y: 0, speed: 5, isInvincible: false },
@@ -24,7 +26,7 @@ let gameState = {
     timeCycle: 0
 };
 
-const ROAD_HEIGHT = 60;
+const ROAD_HEIGHT = 80;
 const ROAD_GAP = 40;
 const VEHICLE_TYPES = ['car', 'truck', 'motorcycle'];
 const POWER_UP_TYPES = ['shield', 'slowTime', 'speedBoost'];
@@ -32,7 +34,12 @@ const POWER_UP_DURATION = 5000;
 
 function initGame() {
     console.log("Initializing game...");
-    gameState.player = { x: gameArea.clientWidth / 2 - 25, y: gameArea.clientHeight - 60, speed: 5, isInvincible: false };
+    gameState.player = { 
+        x: gameArea.clientWidth / 2 - 20, 
+        y: gameArea.clientHeight - 60, 
+        speed: 5, 
+        isInvincible: false 
+    };
     updatePlayerPosition();
     createRoads();
     gameState.isRunning = true;
@@ -40,7 +47,7 @@ function initGame() {
 }
 
 function createRoads() {
-    const roadCount = Math.ceil(gameArea.clientHeight / (ROAD_HEIGHT + ROAD_GAP)) + 1;
+    const roadCount = Math.ceil(gameArea.clientHeight / (ROAD_HEIGHT + ROAD_GAP));
     for (let i = 0; i < roadCount; i++) {
         const road = document.createElement('div');
         road.classList.add('road');
@@ -62,10 +69,10 @@ function movePlayer(direction) {
             if (gameState.player.x > 0) gameState.player.x -= gameState.player.speed;
             break;
         case 'right':
-            if (gameState.player.x < gameArea.clientWidth - 50) gameState.player.x += gameState.player.speed;
+            if (gameState.player.x < gameArea.clientWidth - 40) gameState.player.x += gameState.player.speed;
             break;
         case 'up':
-            if (gameState.player.y < gameArea.clientHeight - 50) gameState.player.y += gameState.player.speed;
+            if (gameState.player.y < gameArea.clientHeight - 40) gameState.player.y += gameState.player.speed;
             break;
         case 'down':
             if (gameState.player.y > 0) gameState.player.y -= gameState.player.speed;
@@ -75,19 +82,21 @@ function movePlayer(direction) {
     checkCrossing();
 }
 
-function createVehicle(road) {
+function createVehicle() {
     const type = VEHICLE_TYPES[Math.floor(Math.random() * VEHICLE_TYPES.length)];
     const vehicle = document.createElement('div');
     vehicle.classList.add('vehicle', type);
+    const roadIndex = Math.floor(Math.random() * gameState.roads.length);
+    const road = gameState.roads[roadIndex];
     vehicle.style.bottom = `${road.y + ROAD_HEIGHT / 2 - 15}px`;
-    vehicle.style.left = `${Math.random() > 0.5 ? '-60px' : gameArea.clientWidth + 'px'}`;
-    gameArea.appendChild(vehicle);
+    vehicle.style.left = `${Math.random() > 0.5 ? '-100px' : gameArea.clientWidth + 'px'}`;
+    vehiclesContainer.appendChild(vehicle);
     return { 
         element: vehicle, 
         x: parseInt(vehicle.style.left), 
         y: parseInt(vehicle.style.bottom), 
-        direction: vehicle.style.left === '-60px' ? 1 : -1,
-        speed: Math.random() * 2 + 1
+        direction: vehicle.style.left === '-100px' ? 1 : -1,
+        speed: (Math.random() * 2 + 2) * gameState.level
     };
 }
 
@@ -96,7 +105,7 @@ function moveVehicles() {
         vehicle.x += vehicle.direction * vehicle.speed;
         vehicle.element.style.left = `${vehicle.x}px`;
         
-        if (vehicle.x > gameArea.clientWidth || vehicle.x < -60) {
+        if (vehicle.x > gameArea.clientWidth + 100 || vehicle.x < -100) {
             vehicle.element.remove();
             gameState.vehicles.splice(index, 1);
         }
@@ -106,19 +115,18 @@ function moveVehicles() {
 function createPowerUp() {
     const type = POWER_UP_TYPES[Math.floor(Math.random() * POWER_UP_TYPES.length)];
     const powerUp = document.createElement('div');
-    powerUp.classList.add('power-up');
-    powerUp.dataset.type = type;
+    powerUp.classList.add('power-up', type);
     powerUp.textContent = type.charAt(0).toUpperCase();
     powerUp.style.bottom = `${Math.random() * (gameArea.clientHeight - 30)}px`;
     powerUp.style.left = `${Math.random() * (gameArea.clientWidth - 30)}px`;
     powerUpsContainer.appendChild(powerUp);
-    gameState.powerUps.push({ element: powerUp, type });
+    gameState.powerUps.push({ element: powerUp, type, x: parseInt(powerUp.style.left), y: parseInt(powerUp.style.bottom) });
 }
 
 function checkCollisions() {
+    const playerRect = player.getBoundingClientRect();
     gameState.vehicles.forEach(vehicle => {
         const vehicleRect = vehicle.element.getBoundingClientRect();
-        const playerRect = player.getBoundingClientRect();
         if (!(vehicleRect.right < playerRect.left || 
               vehicleRect.left > playerRect.right || 
               vehicleRect.bottom < playerRect.top || 
@@ -126,12 +134,9 @@ function checkCollisions() {
             if (!gameState.player.isInvincible) gameOver();
         }
     });
-}
 
-function checkPowerUps() {
     gameState.powerUps.forEach((powerUp, index) => {
         const powerUpRect = powerUp.element.getBoundingClientRect();
-        const playerRect = player.getBoundingClientRect();
         if (!(powerUpRect.right < playerRect.left || 
               powerUpRect.left > playerRect.right || 
               powerUpRect.bottom < playerRect.top || 
@@ -148,10 +153,10 @@ function activatePowerUp(type) {
     switch (type) {
         case 'shield':
             gameState.player.isInvincible = true;
-            player.style.backgroundColor = '#00F';
+            player.style.boxShadow = '0 0 10px #4169E1';
             setTimeout(() => {
                 gameState.player.isInvincible = false;
-                player.style.backgroundColor = '#FF6347';
+                player.style.boxShadow = 'none';
             }, POWER_UP_DURATION);
             break;
         case 'slowTime':
@@ -161,15 +166,15 @@ function activatePowerUp(type) {
             }, POWER_UP_DURATION);
             break;
         case 'speedBoost':
-            gameState.player.speed += 2;
-            setTimeout(() => gameState.player.speed -= 2, POWER_UP_DURATION);
+            gameState.player.speed += 3;
+            setTimeout(() => gameState.player.speed -= 3, POWER_UP_DURATION);
             break;
     }
 }
 
 function checkCrossing() {
-    if (gameState.player.y >= gameArea.clientHeight - 50) {
-        gameState.score += 10;
+    if (gameState.player.y >= gameArea.clientHeight - 40) {
+        gameState.score += 10 * gameState.level;
         scoreElement.textContent = gameState.score;
         if (gameState.score > gameState.highScore) {
             gameState.highScore = gameState.score;
@@ -185,6 +190,7 @@ function gameOver() {
     console.log("Game over!");
     gameState.isRunning = false;
     gameOverScreen.style.display = 'flex';
+    finalScoreElement.textContent = gameState.score;
 }
 
 function restartGame() {
@@ -205,9 +211,8 @@ function gameLoop() {
     if (gameState.isRunning) {
         moveVehicles();
         checkCollisions();
-        checkPowerUps();
         
-        if (Math.random() < 0.02) createVehicle(gameState.roads[Math.floor(Math.random() * gameState.roads.length)]);
+        if (Math.random() < 0.02 * gameState.level) createVehicle();
         if (Math.random() < 0.005) createPowerUp();
         
         gameState.timeCycle++;
@@ -254,5 +259,53 @@ document.addEventListener('keydown', (e) => {
         }
     }
 });
+
+// Touch controls for mobile devices
+let touchStartX = 0;
+let touchStartY = 0;
+
+gameArea.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+});
+
+gameArea.addEventListener('touchmove', (e) => {
+    if (!gameState.isRunning) return;
+
+    e.preventDefault();
+    const touchEndX = e.touches[0].clientX;
+    const touchEndY = e.touches[0].clientY;
+    const dx = touchEndX - touchStartX;
+    const dy = touchEndY - touchStartY;
+
+    if (Math.abs(dx) > Math.abs(dy)) {
+        movePlayer(dx > 0 ? 'right' : 'left');
+    } else {
+        movePlayer(dy > 0 ? 'down' : 'up');
+    }
+
+    touchStartX = touchEndX;
+    touchStartY = touchEndY;
+});
+
+// Responsive game area
+function resizeGame() {
+    const gameContainer = document.getElementById('game-container');
+    const aspectRatio = 16 / 9;
+    const newWidth = window.innerWidth;
+    const newHeight = window.innerHeight;
+    const newAspectRatio = newWidth / newHeight;
+
+    if (newAspectRatio > aspectRatio) {
+        gameContainer.style.width = `${newHeight * aspectRatio}px`;
+        gameContainer.style.height = `${newHeight}px`;
+    } else {
+        gameContainer.style.width = `${newWidth}px`;
+        gameContainer.style.height = `${newWidth / aspectRatio}px`;
+    }
+}
+
+window.addEventListener('resize', resizeGame);
+resizeGame();
 
 console.log("JavaScript loaded.");
