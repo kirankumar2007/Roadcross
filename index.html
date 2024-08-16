@@ -3,41 +3,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Road Crossing Adventure Deluxe</title>
+    <title>Snake Game</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div id="game-container">
-        <header>
-            <h1>Road Crossing Adventure Deluxe</h1>
-        </header>
         <div id="game-area">
-            <div id="score-panel">
-                <div id="score">Score: <span id="score-value">0</span></div>
-                <div id="high-score">High Score: <span id="high-score-value">0</span></div>
-            </div>
-            <div id="level">Level: <span id="level-value">1</span></div>
-            <div id="time-of-day"></div>
-            <div id="player"></div>
             <div id="roads"></div>
             <div id="power-ups"></div>
+            <div id="player"></div>
+        </div>
+        <div id="game-info">
+            <div class="info-item">
+                <span class="info-label">Score:</span>
+                <span id="score-value">0</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">High Score:</span>
+                <span id="high-score-value">0</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Level:</span>
+                <span id="level-value">1</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">Time of Day:</span>
+                <span id="time-of-day">Day</span>
+            </div>
         </div>
         <div id="controls">
-            <button id="start-button">Start Game</button>
+            <button id="start-button">Start</button>
             <button id="pause-button">Pause</button>
         </div>
-        <div id="info-panel">
-            <h2>Power-ups:</h2>
-            <ul>
-                <li>🛡️ Shield: Temporary invincibility</li>
-                <li>⏱️ Slow Time: Slows down vehicles</li>
-                <li>🚀 Speed Boost: Temporary speed increase</li>
-            </ul>
+        <div id="game-over">
+            <h2>Game Over!</h2>
+            <button id="restart-button">Restart</button>
         </div>
-        <footer>
-            <p>Use arrow keys or WASD to move. Avoid vehicles and reach the top!</p>
-            <p>&copy; 2024 Road Crossing Adventure Deluxe</p>
-        </footer>
     </div>
     <script src="script.js"></script>
 </body>
