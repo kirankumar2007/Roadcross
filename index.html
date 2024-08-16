@@ -3,14 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Road Crossing Game</title>
+    <title>Road Crossing Adventure</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div id="game-container">
-        <div id="player"></div>
-        <div id="score">Score: <span id="score-value">0</span></div>
-    </div>
+    <header>
+        <h1>Road Crossing Adventure</h1>
+    </header>
+    <main>
+        <div id="game-container">
+            <div id="player"></div>
+            <div id="score-panel">
+                <div id="score">Score: <span id="score-value">0</span></div>
+                <div id="high-score">High Score: <span id="high-score-value">0</span></div>
+            </div>
+            <div id="level">Level: <span id="level-value">1</span></div>
+        </div>
+        <div id="controls">
+            <button id="start-button">Start Game</button>
+            <button id="pause-button">Pause</button>
+        </div>
+    </main>
+    <footer>
+        <p>Use arrow keys to move. Avoid cars and reach the top!</p>
+        <p>&copy; 2024 Road Crossing Adventure</p>
+    </footer>
     <script src="script.js"></script>
 </body>
 </html>

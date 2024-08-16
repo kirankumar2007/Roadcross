@@ -1,12 +1,22 @@
 const gameContainer = document.getElementById('game-container');
 const player = document.getElementById('player');
 const scoreElement = document.getElementById('score-value');
+const highScoreElement = document.getElementById('high-score-value');
+const levelElement = document.getElementById('level-value');
+const startButton = document.getElementById('start-button');
+const pauseButton = document.getElementById('pause-button');
 
 let playerPosition = { x: 180, y: 10 };
 let score = 0;
+let highScore = 0;
+let level = 1;
 let cars = [];
+let isGameRunning = false;
+let gameLoopId;
 
 function movePlayer(e) {
+    if (!isGameRunning) return;
+
     const step = 10;
     switch (e.key) {
         case 'ArrowLeft':
@@ -55,7 +65,7 @@ function moveCars() {
 
 function checkCollision() {
     const playerRect = player.getBoundingClientRect();
-    cars.forEach(car => {
+    for (let car of cars) {
         const carRect = car.getBoundingClientRect();
         if (
             playerRect.left < carRect.right &&
@@ -63,10 +73,10 @@ function checkCollision() {
             playerRect.top < carRect.bottom &&
             playerRect.bottom > carRect.top
         ) {
-            alert('Game Over! Your score: ' + score);
-            resetGame();
+            gameOver();
+            return;
         }
-    });
+    }
 }
 
 function checkCrossing() {
@@ -75,6 +85,25 @@ function checkCrossing() {
         scoreElement.textContent = score;
         playerPosition.y = 10;
         updatePlayerPosition();
+        updateLevel();
+    }
+}
+
+function updateLevel() {
+    level = Math.floor(score / 5) + 1;
+    levelElement.textContent = level;
+}
+
+function gameOver() {
+    alert('Game Over! Your score: ' + score);
+    updateHighScore();
+    resetGame();
+}
+
+function updateHighScore() {
+    if (score > highScore) {
+        highScore = score;
+        highScoreElement.textContent = highScore;
     }
 }
 
@@ -83,16 +112,46 @@ function resetGame() {
     updatePlayerPosition();
     score = 0;
     scoreElement.textContent = score;
+    level = 1;
+    levelElement.textContent = level;
     cars.forEach(car => gameContainer.removeChild(car));
     cars = [];
+    startButton.textContent = 'Start Game';
+    isGameRunning = false;
+    cancelAnimationFrame(gameLoopId);
 }
 
 function gameLoop() {
-    moveCars();
-    if (Math.random() < 0.02) createCar();
-    checkCollision();
-    requestAnimationFrame(gameLoop);
+    if (isGameRunning) {
+        moveCars();
+        if (Math.random() < 0.02 * level) createCar();
+        checkCollision();
+        gameLoopId = requestAnimationFrame(gameLoop);
+    }
+}
+
+function startGame() {
+    if (!isGameRunning) {
+        isGameRunning = true;
+        gameLoop();
+        startButton.textContent = 'Restart';
+    } else {
+        resetGame();
+    }
+}
+
+function togglePause() {
+    if (isGameRunning) {
+        isGameRunning = false;
+        cancelAnimationFrame(gameLoopId);
+        pauseButton.textContent = 'Resume';
+    } else {
+        isGameRunning = true;
+        gameLoop();
+        pauseButton.textContent = 'Pause';
+    }
 }
 
 document.addEventListener('keydown', movePlayer);
-gameLoop();
+startButton.addEventListener('click', startGame);
+pauseButton.addEventListener('click', togglePause);

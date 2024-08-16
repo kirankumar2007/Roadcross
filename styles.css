@@ -1,11 +1,32 @@
 body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f0f0f0;
     margin: 0;
     padding: 0;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
     align-items: center;
-    height: 100vh;
-    background-color: #f0f0f0;
+    min-height: 100vh;
+}
+
+header {
+    background-color: #333;
+    color: white;
+    width: 100%;
+    text-align: center;
+    padding: 20px 0;
+}
+
+h1 {
+    margin: 0;
+    font-size: 2.5em;
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 20px 0;
 }
 
 #game-container {
@@ -14,28 +35,89 @@ body {
     background-color: #98FB98;
     position: relative;
     overflow: hidden;
+    border: 3px solid #333;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
 #player {
     width: 40px;
     height: 40px;
-    background-color: #FF0000;
+    background-color: #FF4500;
     position: absolute;
-    bottom: 10px;
-    left: 180px;
+    border-radius: 50%;
+    transition: all 0.1s ease;
 }
 
 .car {
     width: 60px;
     height: 30px;
-    background-color: #0000FF;
+    background-color: #4169E1;
     position: absolute;
+    border-radius: 5px;
 }
 
-#score {
+#score-panel {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    background-color: #333;
+    color: white;
+}
+
+#score, #high-score {
+    font-size: 1.2em;
+}
+
+#level {
     position: absolute;
-    top: 10px;
+    top: 50px;
     left: 10px;
-    font-family: Arial, sans-serif;
-    font-size: 20px;
+    font-size: 1.2em;
+    color: #333;
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 5px 10px;
+    border-radius: 15px;
+}
+
+#controls {
+    margin-top: 20px;
+}
+
+button {
+    font-size: 1em;
+    padding: 10px 20px;
+    margin: 0 10px;
+    cursor: pointer;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+#pause-button {
+    background-color: #f44336;
+}
+
+#pause-button:hover {
+    background-color: #da190b;
+}
+
+footer {
+    background-color: #333;
+    color: white;
+    width: 100%;
+    text-align: center;
+    padding: 10px 0;
+    position: fixed;
+    bottom: 0;
+}
+
+footer p {
+    margin: 5px 0;
 }
