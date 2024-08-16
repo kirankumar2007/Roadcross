@@ -32,7 +32,7 @@ const POWER_UP_DURATION = 5000;
 
 function initGame() {
     console.log("Initializing game...");
-    gameState.player = { x: gameArea.clientWidth / 2 - 35, y: gameArea.clientHeight - 80, speed: 5, isInvincible: false };
+    gameState.player = { x: gameArea.clientWidth / 2 - 25, y: gameArea.clientHeight - 60, speed: 5, isInvincible: false };
     updatePlayerPosition();
     createRoads();
     gameState.isRunning = true;
@@ -62,10 +62,10 @@ function movePlayer(direction) {
             if (gameState.player.x > 0) gameState.player.x -= gameState.player.speed;
             break;
         case 'right':
-            if (gameState.player.x < gameArea.clientWidth - 70) gameState.player.x += gameState.player.speed;
+            if (gameState.player.x < gameArea.clientWidth - 50) gameState.player.x += gameState.player.speed;
             break;
         case 'up':
-            if (gameState.player.y < gameArea.clientHeight - 40) gameState.player.y += gameState.player.speed;
+            if (gameState.player.y < gameArea.clientHeight - 50) gameState.player.y += gameState.player.speed;
             break;
         case 'down':
             if (gameState.player.y > 0) gameState.player.y -= gameState.player.speed;
@@ -80,14 +80,14 @@ function createVehicle(road) {
     const vehicle = document.createElement('div');
     vehicle.classList.add('vehicle', type);
     vehicle.style.bottom = `${road.y + ROAD_HEIGHT / 2 - 15}px`;
-    vehicle.style.left = `${Math.random() > 0.5 ? '-50px' : gameArea.clientWidth + 'px'}`;
+    vehicle.style.left = `${Math.random() > 0.5 ? '-60px' : gameArea.clientWidth + 'px'}`;
     gameArea.appendChild(vehicle);
     return { 
         element: vehicle, 
         x: parseInt(vehicle.style.left), 
         y: parseInt(vehicle.style.bottom), 
-        direction: vehicle.style.left === '-50px' ? 1 : -1,
-        speed: type === 'motorcycle' ? 3 : (type === 'truck' ? 1 : 2)
+        direction: vehicle.style.left === '-60px' ? 1 : -1,
+        speed: Math.random() * 2 + 1
     };
 }
 
@@ -96,7 +96,7 @@ function moveVehicles() {
         vehicle.x += vehicle.direction * vehicle.speed;
         vehicle.element.style.left = `${vehicle.x}px`;
         
-        if (vehicle.x > gameArea.clientWidth || vehicle.x < -50) {
+        if (vehicle.x > gameArea.clientWidth || vehicle.x < -60) {
             vehicle.element.remove();
             gameState.vehicles.splice(index, 1);
         }
@@ -113,18 +113,6 @@ function createPowerUp() {
     powerUp.style.left = `${Math.random() * (gameArea.clientWidth - 30)}px`;
     powerUpsContainer.appendChild(powerUp);
     gameState.powerUps.push({ element: powerUp, type });
-}
-
-function movePowerUps() {
-    gameState.powerUps.forEach((powerUp, index) => {
-        powerUp.y -= 2;
-        powerUp.element.style.bottom = `${powerUp.y}px`;
-        
-        if (powerUp.y < 0) {
-            powerUp.element.remove();
-            gameState.powerUps.splice(index, 1);
-        }
-    });
 }
 
 function checkCollisions() {
@@ -160,11 +148,17 @@ function activatePowerUp(type) {
     switch (type) {
         case 'shield':
             gameState.player.isInvincible = true;
-            setTimeout(() => gameState.player.isInvincible = false, POWER_UP_DURATION);
+            player.style.backgroundColor = '#00F';
+            setTimeout(() => {
+                gameState.player.isInvincible = false;
+                player.style.backgroundColor = '#FF6347';
+            }, POWER_UP_DURATION);
             break;
         case 'slowTime':
-            gameState.level++;
-            levelElement.textContent = gameState.level;
+            gameState.vehicles.forEach(vehicle => vehicle.speed *= 0.5);
+            setTimeout(() => {
+                gameState.vehicles.forEach(vehicle => vehicle.speed *= 2);
+            }, POWER_UP_DURATION);
             break;
         case 'speedBoost':
             gameState.player.speed += 2;
@@ -174,54 +168,58 @@ function activatePowerUp(type) {
 }
 
 function checkCrossing() {
-    if (gameState.player.y <= 0) {
+    if (gameState.player.y >= gameArea.clientHeight - 50) {
         gameState.score += 10;
         scoreElement.textContent = gameState.score;
         if (gameState.score > gameState.highScore) {
             gameState.highScore = gameState.score;
             highScoreElement.textContent = gameState.highScore;
         }
-        gameState.player.y = gameArea.clientHeight - 40;
-        levelElement.textContent = Math.floor(gameState.score / 100) + 1;
+        gameState.player.y = 0;
+        gameState.level = Math.floor(gameState.score / 100) + 1;
+        levelElement.textContent = gameState.level;
     }
 }
 
 function gameOver() {
     console.log("Game over!");
     gameState.isRunning = false;
-    gameOverScreen.style.display = 'block';
+    gameOverScreen.style.display = 'flex';
 }
 
 function restartGame() {
     console.log("Restarting game...");
     gameOverScreen.style.display = 'none';
+    gameState.score = 0;
+    scoreElement.textContent = '0';
+    gameState.level = 1;
+    levelElement.textContent = '1';
+    gameState.vehicles.forEach(vehicle => vehicle.element.remove());
+    gameState.vehicles = [];
+    gameState.powerUps.forEach(powerUp => powerUp.element.remove());
+    gameState.powerUps = [];
     initGame();
-    gameState.isRunning = true;
-    gameLoop();
 }
 
 function gameLoop() {
     if (gameState.isRunning) {
         moveVehicles();
-        movePowerUps();
         checkCollisions();
         checkPowerUps();
+        
+        if (Math.random() < 0.02) createVehicle(gameState.roads[Math.floor(Math.random() * gameState.roads.length)]);
+        if (Math.random() < 0.005) createPowerUp();
+        
         gameState.timeCycle++;
         if (gameState.timeCycle % 1000 === 0) {
             gameState.timeOfDay = gameState.timeOfDay === 'day' ? 'night' : 'day';
             gameArea.classList.toggle('night', gameState.timeOfDay === 'night');
-            timeOfDayElement.textContent = gameState.timeOfDay;
+            timeOfDayElement.textContent = gameState.timeOfDay.charAt(0).toUpperCase() + gameState.timeOfDay.slice(1);
         }
+        
         requestAnimationFrame(gameLoop);
     }
 }
-
-// Placeholder functions
-function placeholderFunction1() { console.log("Placeholder function 1"); }
-function placeholderFunction2() { console.log("Placeholder function 2"); }
-function placeholderFunction3() { console.log("Placeholder function 3"); }
-function placeholderFunction4() { console.log("Placeholder function 4"); }
-function placeholderFunction5() { console.log("Placeholder function 5"); }
 
 startButton.addEventListener('click', () => {
     if (!gameState.isRunning) {
@@ -238,7 +236,6 @@ pauseButton.addEventListener('click', () => {
 
 restartButton.addEventListener('click', restartGame);
 
-// Event listeners for player controls
 document.addEventListener('keydown', (e) => {
     if (gameState.isRunning) {
         switch (e.code) {
