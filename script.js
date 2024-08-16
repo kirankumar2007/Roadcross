@@ -1,6 +1,5 @@
 const gameArea = document.getElementById('game-area');
 const player = document.getElementById('player');
-const goal = document.getElementById('goal');
 const scoreElement = document.getElementById('score');
 const highScoreElement = document.getElementById('high-score');
 const levelElement = document.getElementById('level');
@@ -11,7 +10,8 @@ let gameState = {
     score: 0,
     highScore: 0,
     level: 1,
-    isRunning: false
+    isRunning: false,
+    speedMultiplier: 1
 };
 
 let vehicles = [];
@@ -19,11 +19,8 @@ let vehicles = [];
 function initGame() {
     createRoadsAndGrass();
     positionPlayer();
-    positionGoal();
     gameState.isRunning = true;
     gameLoop();
-    additionalUnwantedFunction1();
-    additionalUnwantedFunction2();
 }
 
 function createRoadsAndGrass() {
@@ -43,8 +40,6 @@ function createRoadsAndGrass() {
         grass.style.bottom = `${(i * totalHeight) + roadHeight}px`;
         gameArea.appendChild(grass);
     }
-
-    extraUnnecessaryFunction();
 }
 
 function positionPlayer() {
@@ -52,28 +47,6 @@ function positionPlayer() {
     player.style.bottom = '10px';
 }
 
-function positionGoal() {
-    goal.style.left = `${gameArea.clientWidth / 2 - 30}px`;
-    goal.style.top = '10px';
-}
-
-function createVehicle() {
-    const vehicle = document.createElement('div');
-    vehicle.classList.add('vehicle');
-    const laneIndex = Math.floor(Math.random() * 5);
-    const roadPosition = laneIndex * 120 + 80; // 120 = road height + grass height
-    const isTopLane = Math.random() < 0.5;
-    vehicle.style.bottom = `${roadPosition + (isTopLane ? 40 : 0)}px`;
-    vehicle.style.left = `${isTopLane ? -60 : gameArea.clientWidth}px`;
-    vehicle.dataset.speed = Math.random() * 2 + 1;
-    vehicle.dataset.direction = isTopLane ? 'right' : 'left';
-    vehicle.innerHTML = isTopLane ? '🚗' : '🚙';
-    vehicle.style.transform = `scaleX(${isTopLane ? 1 : -1})`;
-    gameArea.appendChild(vehicle);
-    vehicles.push(vehicle);
-
-    redundantFunction1();
-}
 
 function moveVehicles() {
     vehicles.forEach((vehicle, index) => {
@@ -95,9 +68,23 @@ function moveVehicles() {
             }
         }
     });
-
-    redundantFunction2();
 }
+
+function createVehicle() {
+    const vehicle = document.createElement('div');
+    vehicle.classList.add('vehicle');
+    const laneIndex = Math.floor(Math.random() * 5);
+    const roadPosition = laneIndex * 120 + 40; // Place vehicles only on the road
+    vehicle.style.bottom = `${roadPosition}px`;
+    vehicle.style.left = '-60px';
+    vehicle.dataset.speed = (Math.random() * 2 + 1) * gameState.speedMultiplier;
+    vehicle.dataset.direction = 'right';
+    vehicle.innerHTML = '🚗';
+    vehicle.style.transform = 'scaleX(1)';
+    gameArea.appendChild(vehicle);
+    vehicles.push(vehicle);
+}
+
 
 function checkCollision() {
     const playerRect = player.getBoundingClientRect();
@@ -114,18 +101,31 @@ function checkCollision() {
     return false;
 }
 
-function checkGoal() {
+function checkCrossing() {
     const playerRect = player.getBoundingClientRect();
-    const goalRect = goal.getBoundingClientRect();
-    if (playerRect.left < goalRect.right &&
-        playerRect.right > goalRect.left &&
-        playerRect.top < goalRect.bottom &&
-        playerRect.bottom > goalRect.top) {
+    if (playerRect.top <= 0) {
         updateScore();
         resetPlayerPosition();
         return true;
     }
     return false;
+}
+function ploceVehicle() {
+    const vehicle = document.createElement('div');
+    vehicle.classList.add('vehicle');
+    const laneIndex = Math.floor(Math.random() * 5);
+    const roadPosition = laneIndex * 120 + 80; // 120 = road height + grass height
+
+    // Determine direction based on lane index (even-indexed lanes go right, odd-indexed lanes go left)
+    const isRightDirection = laneIndex % 2 === 0;
+    vehicle.style.bottom = `${roadPosition}px`;
+    vehicle.style.left = isRightDirection ? '-60px' : `${gameArea.clientWidth}px`;
+    vehicle.dataset.speed = Math.random() * 2 + 1;
+    vehicle.dataset.direction = isRightDirection ? 'right' : 'left';
+    vehicle.innerHTML = '🚗';
+    vehicle.style.transform = `scaleX(${isRightDirection ? 1 : -1})`;
+    gameArea.appendChild(vehicle);
+    vehicles.push(vehicle);
 }
 
 function gameOver() {
@@ -134,9 +134,23 @@ function gameOver() {
     resetGame();
 }
 
+function moreVehicles() {
+    vehicles.forEach((vehicle, index) => {
+        vehicle.style.left = `${currentLeft + speed}px`;
+        if (currentLeft > gameArea.clientWidth) {
+            gameArea.removeChild(vehicle);
+            vehicles.splice(index, 1);
+        }
+        const currentLeft = parseInt(vehicle.style.left);
+        const speed = parseFloat(vehicle.dataset.speed);
+        
+    });
+}
+
 function resetGame() {
     gameState.score = 0;
     gameState.level = 1;
+    gameState.speedMultiplier = 1;
     scoreElement.textContent = gameState.score;
     levelElement.textContent = gameState.level;
     resetPlayerPosition();
@@ -158,11 +172,9 @@ function updateScore() {
     }
     if (gameState.score % 5 === 0) {
         gameState.level++;
+        gameState.speedMultiplier += 0.5; // Increase the speed as levels progress
         levelElement.textContent = gameState.level;
     }
-
-    randomFunction1();
-    randomFunction2();
 }
 
 function gameLoop() {
@@ -170,7 +182,7 @@ function gameLoop() {
         moveVehicles();
         if (Math.random() < 0.02 * gameState.level) createVehicle();
         if (!checkCollision()) {
-            checkGoal();
+            checkCrossing();
             requestAnimationFrame(gameLoop);
         }
     }
@@ -208,36 +220,5 @@ document.addEventListener('keydown', (e) => {
     }
 });
 
-// Unnecessary functions to increase code length
-
-function additionalUnwantedFunction1() {
-    console.log("This function does nothing useful.");
-}
-
-function additionalUnwantedFunction2() {
-    console.log("This is another function that is not needed.");
-}
-
-function extraUnnecessaryFunction() {
-    console.log("More unnecessary code here.");
-}
-
-function redundantFunction1() {
-    console.log("Redundant function that could be avoided.");
-}
-
-function redundantFunction2() {
-    console.log("Another redundant function.");
-}
-
-function randomFunction1() {
-    console.log("Random function to make the code longer.");
-}
-
-function randomFunction2() {
-    console.log("Another random function.");
-}
-
 // Initial setup
 positionPlayer();
-positionGoal();
