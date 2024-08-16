@@ -7,7 +7,7 @@ body, html {
 }
 
 #game-container {
-    max-width: 500px;
+    max-width: 600px;
     margin: 0 auto;
     background-color: #fff;
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
@@ -33,6 +33,7 @@ h1 {
     background-color: #98FB98;
     position: relative;
     overflow: hidden;
+    transition: background-color 5s;
 }
 
 #score-panel {
@@ -43,14 +44,21 @@ h1 {
     justify-content: space-between;
 }
 
-#level {
+#level, #time-of-day {
     position: absolute;
     top: 40px;
-    left: 10px;
     background-color: rgba(255, 255, 255, 0.8);
     padding: 5px 10px;
     border-radius: 15px;
     z-index: 10;
+}
+
+#level {
+    left: 10px;
+}
+
+#time-of-day {
+    right: 10px;
 }
 
 #player {
@@ -70,13 +78,27 @@ h1 {
     width: 100%;
 }
 
-.car {
+.vehicle {
     width: 50px;
     height: 25px;
-    background-color: #4169E1;
     position: absolute;
-    border-radius: 5px;
     transition: left 0.1s linear;
+}
+
+.car { background-color: #4169E1; }
+.truck { background-color: #8B4513; width: 70px; }
+.motorcycle { background-color: #FF69B4; width: 30px; }
+
+.power-up {
+    width: 20px;
+    height: 20px;
+    position: absolute;
+    border-radius: 50%;
+    z-index: 4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 16px;
 }
 
 #controls {
@@ -98,6 +120,22 @@ button {
 
 button:hover {
     background-color: #45a049;
+}
+
+#info-panel {
+    background-color: #f9f9f9;
+    padding: 10px;
+    border-top: 1px solid #ddd;
+}
+
+#info-panel h2 {
+    margin-top: 0;
+    font-size: 18px;
+}
+
+#info-panel ul {
+    padding-left: 20px;
+    margin-bottom: 0;
 }
 
 footer {

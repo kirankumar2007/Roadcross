@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Road Crossing Adventure</title>
+    <title>Road Crossing Adventure Deluxe</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div id="game-container">
         <header>
-            <h1>Road Crossing Adventure</h1>
+            <h1>Road Crossing Adventure Deluxe</h1>
         </header>
         <div id="game-area">
             <div id="score-panel">
@@ -17,16 +17,26 @@
                 <div id="high-score">High Score: <span id="high-score-value">0</span></div>
             </div>
             <div id="level">Level: <span id="level-value">1</span></div>
+            <div id="time-of-day"></div>
             <div id="player"></div>
             <div id="roads"></div>
+            <div id="power-ups"></div>
         </div>
         <div id="controls">
             <button id="start-button">Start Game</button>
             <button id="pause-button">Pause</button>
         </div>
+        <div id="info-panel">
+            <h2>Power-ups:</h2>
+            <ul>
+                <li>🛡️ Shield: Temporary invincibility</li>
+                <li>⏱️ Slow Time: Slows down vehicles</li>
+                <li>🚀 Speed Boost: Temporary speed increase</li>
+            </ul>
+        </div>
         <footer>
-            <p>Use arrow keys or WASD to move. Avoid cars and reach the top!</p>
-            <p>&copy; 2024 Road Crossing Adventure</p>
+            <p>Use arrow keys or WASD to move. Avoid vehicles and reach the top!</p>
+            <p>&copy; 2024 Road Crossing Adventure Deluxe</p>
         </footer>
     </div>
     <script src="script.js"></script>
